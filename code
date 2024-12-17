@@ -1,0 +1,64 @@
+import os
+import openai
+
+
+def uploadFile():
+
+    # Load the API Key from environment variables
+    openai.api_key = os.getenv("OPENAI_API_KEY")
+
+
+    # Path to the JSONL file you want to upload
+    file_path = "dataEnglish.jsonl"
+
+    try:
+
+
+        print(os.getenv("OPENAI_API_KEY"))
+
+        # Upload the file using the correct API method
+        print("Uploading the file...")
+        with open(file_path, "rb") as f:
+            response = openai.File.create(
+                file=f,
+                purpose="fine-tune"
+            )
+        file_id = response["id"]
+        print(f"File uploaded successfully. File ID: {file_id}")
+        fileTuning(file_id)
+    except openai.error.OpenAIError as e:
+        print(f"Error: {e}")
+
+
+def fileTuning(trainingFile=""):
+
+    openai.api_key = ""
+    response = openai.FineTuningJob.create(
+    training_file=trainingFile,  # ID del nuevo archivo subido
+    model="ft:gpt-3.5-turbo-0125:loriginal-org::AW8Hm02S"
+    )
+    print(f"Ajuste fino iniciado. Fine-tune ID: {response['id']}")
+    checkStatus(response['id'])
+
+
+def checkStatus(fine_tune_id=""):
+
+    # Set your API key
+    openai.api_key = ""
+
+    # Fine-tuning job ID
+    #fine_tune_id = "ftjob-0Q71skMbMd2CGlCYD4D1yFnG"
+
+    try:
+        # Retrieve the fine-tuning job status using FineTuningJob
+        status = openai.FineTuningJob.retrieve(fine_tune_id)
+        print(f"Fine-tuning status: {status['status']}")
+
+        # Show detailed information about the fine-tuning job
+        import json
+        print("Fine-tuning details:")
+        print(json.dumps(status, indent=4))
+    except openai.error.InvalidRequestError as e:
+        print(f"Error retrieving fine-tuning job: {e}")
+
+uploadFile()
